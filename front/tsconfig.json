@@ -1,0 +1,11 @@
+{
+    "compilerOptions": {
+      "esModuleInterop": true,
+      "allowSyntheticDefaultImports": true,  // Optional, but recommended
+      "module": "ESNext",                    // Ensure you're using ES modules
+      "moduleResolution": "node",           // Required for resolving node modules
+      "jsx": "react",
+      "strict": true
+    }
+  }
+  
