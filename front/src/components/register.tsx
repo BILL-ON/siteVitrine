@@ -62,30 +62,17 @@ const SignUpContainer = styled(Stack)(({ theme }) => ({
 export default function SignUp(props: { disableCustomTheme?: boolean }) {
   const navigate = useNavigate();
 
-  const [emailError, setEmailError] = React.useState(false);
-  const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
   const [passwordError, setPasswordError] = React.useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
-  const [nameError, setNameError] = React.useState(false);
-  const [nameErrorMessage, setNameErrorMessage] = React.useState('');
+  const [credentialError, setCredentialError] = React.useState(false);
+  const [credentialErrorMessage, setCredentialErrorMessage] = React.useState('');
 
   const validateInputs = () => {
-    const email = document.getElementById('email') as HTMLInputElement;
+    const credential = document.getElementById('credential') as HTMLInputElement;
     const password = document.getElementById('password') as HTMLInputElement;
-    const name = document.getElementById('name') as HTMLInputElement;
-
     let isValid = true;
 
-    if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
-      setEmailError(true);
-      setEmailErrorMessage('Please enter a valid email address.');
-      isValid = false;
-    } else {
-      setEmailError(false);
-      setEmailErrorMessage('');
-    }
-
-    if (!password.value || password.value.length < 6) {
+    if (!password.value || password.value.length < 1) {
       setPasswordError(true);
       setPasswordErrorMessage('Password must be at least 6 characters long.');
       isValid = false;
@@ -94,34 +81,71 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
       setPasswordErrorMessage('');
     }
 
-    if (!name.value || name.value.length < 1) {
-      setNameError(true);
-      setNameErrorMessage('Name is required.');
+    if (!credential.value || credential.value.length < 1) {
+      setCredentialError(true);
+      setCredentialErrorMessage('Name is required.');
       isValid = false;
     } else {
-      setNameError(false);
-      setNameErrorMessage('');
+      setCredentialError(false);
+      setCredentialErrorMessage('');
     }
 
     return isValid;
   };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    if (nameError || emailError || passwordError) {
+    event.preventDefault();
+
+    if (credentialError || passwordError) {
       event.preventDefault();
       return;
     }
     const data = new FormData(event.currentTarget);
     console.log({
-      name: data.get('name'),
-      lastName: data.get('lastName'),
-      email: data.get('email'),
+      credential: data.get('credential'),
       password: data.get('password'),
     });
-    const handleLogin = (newToken: string) => {
-      localStorage.setItem('jwt', newToken);
-    };
 
+    const credential = data.get('credential') as String;
+    const password = data.get('password');
+    let body: any = { "password": password, "money": 0 };
+    if (credential.includes('@')) {
+      body["email"] = credential;
+    } else {
+      body["username"] = credential;
+    }
+
+    fetch('http://localhost:3000/users/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    })
+      .then(response => {
+        if (!response.ok) {
+          // Log the status and status text for more information
+          console.error('Server returned an error:', response.status, response.statusText);
+          throw new Error('Network response was not ok.');
+        }
+
+        // Check if the response is JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new TypeError("Oops, we haven't got JSON!");
+        }
+
+        return response.json();
+      })
+      .then(data => {
+        console.log("WAI CA MARCHE");
+        localStorage.setItem('jwt', data.token);
+        navigate('/');
+        window.location.reload();
+      })
+      .catch(error => {
+        console.error('There has been a problem with your fetch operation:', error);
+      });
   };
 
   return (
@@ -135,7 +159,7 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
             variant="h4"
             sx={{ width: '100%', fontSize: 'clamp(2rem, 10vw, 2.15rem)' }}
           >
-            Sign up
+            Sign upp
           </Typography>
           <Box
             component="form"
@@ -143,32 +167,16 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
             sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
           >
             <FormControl>
-              <FormLabel htmlFor="name">Full name</FormLabel>
-              <TextField
-                autoComplete="name"
-                name="name"
-                required
-                fullWidth
-                id="name"
-                placeholder="Jon Snow"
-                error={nameError}
-                helperText={nameErrorMessage}
-                color={nameError ? 'error' : 'primary'}
-              />
-            </FormControl>
-            <FormControl>
-              <FormLabel htmlFor="email">Email</FormLabel>
+              <FormLabel htmlFor="credential">Name or Email</FormLabel>
               <TextField
                 required
                 fullWidth
-                id="email"
+                id="credential"
                 placeholder="your@email.com"
-                name="email"
+                name="credential"
                 autoComplete="email"
                 variant="outlined"
-                error={emailError}
-                helperText={emailErrorMessage}
-                color={passwordError ? 'error' : 'primary'}
+                color={'primary'}
               />
             </FormControl>
             <FormControl>
@@ -187,10 +195,6 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
                 color={passwordError ? 'error' : 'primary'}
               />
             </FormControl>
-            <FormControlLabel
-              control={<Checkbox value="allowExtraEmails" color="primary" />}
-              label="I want to receive updates via email."
-            />
             <Button
               type="submit"
               fullWidth
