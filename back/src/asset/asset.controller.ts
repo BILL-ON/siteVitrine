@@ -1,4 +1,3 @@
-// src/asset/asset.controller.ts
 import { Controller, Post, Body, Put, Param, Get, Req, UseGuards } from '@nestjs/common';
 import { AssetService } from './asset.service';
 import { Asset } from './asset.entity';
