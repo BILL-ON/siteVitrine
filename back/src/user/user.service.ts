@@ -18,11 +18,15 @@ export class UserService {
   }
 
   async findOneByUsernameOrEmail(username: string, email: string): Promise<User | null> {
-    return this.userRepository.findOne({ where: [{ username }, { email }] });
+    if (username === '') {
+      return this.userRepository.findOne({ where: { email } });
+    } else {
+      return this.userRepository.findOne({ where: { username } });
+    }
   }
 
-  async validateUser(username: string, password: string): Promise<User | null> {
-    const user = await this.findOneByUsernameOrEmail(username, username);
+  async validateUser(username: string, email: string, password: string): Promise<User | null> {
+    const user = await this.findOneByUsernameOrEmail(username, email);
     if (user && user.password === sha256(password)) {
       return user;
     }

@@ -5,7 +5,7 @@ import { AuthGuard } from '@nestjs/passport';
 
 @Controller('users')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UserService) { }
 
   @Post('create')
   async create(@Body() user: User): Promise<{ token: string }> {
@@ -15,13 +15,15 @@ export class UserController {
   }
 
   @Post('login')
-  async login(@Body() body: { username: string; password: string }): Promise<{ token: string }  | null > {
-    const user = await this.userService.validateUser(body.username, body.password);
+  async login(@Body() body: { username: string | undefined; email: string | undefined, password: string }): Promise<any> {
+    const email = body.email ? body.email : '';
+    const username = body.username ? body.username : '';
+    const user = await this.userService.validateUser(username, email, body.password);
     if (user) {
       const token = await this.userService.generateJWT(user);
       return { token };
     }
-    return null;
+    return { "error": 'Invalid username or password' };
   }
 
   @Delete()
@@ -32,7 +34,7 @@ export class UserController {
 
   @Get('data')
   @UseGuards(AuthGuard('jwt'))
-  async getData(@Req() req): Promise<User | null > {
+  async getData(@Req() req): Promise<User | null> {
     return this.userService.getUserData(req.user.username);
   }
 
